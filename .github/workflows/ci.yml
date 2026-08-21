@@ -18,7 +18,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # jvmTest runs GeoMathTest (commonTest) on the JVM; wasmJs is
-      # compile-checked rather than test-run in CI to avoid depending on a
-      # headless-browser setup for coverage jvmTest already provides.
+      # jvmTest runs GeoMathTest and PolyBoolGeometryEngineTest (commonTest) on
+      # the JVM; wasmJs is compile-checked rather than test-run in CI to avoid
+      # depending on a headless-browser setup for coverage jvmTest already provides.
       - run: ./gradlew jvmTest compileKotlinWasmJs --console=plain

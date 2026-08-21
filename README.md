@@ -3,33 +3,56 @@
 A Kotlin Multiplatform geometry abstraction, built for
 [KnowYourCity](https://github.com/jwtue)'s Android→web (Kotlin
 Multiplatform/Compose Multiplatform) expansion. Two parts, deliberately kept
-separate because they have very different portability stories:
+separate because they started with very different portability stories:
 
 - **`GeoMath`** — great-circle (haversine) point distance and polyline
-  length. Pure Kotlin, no platform dependency, fully implemented on every
-  target. Matches the formula and Earth radius (6,371,009 m) of
+  length. Pure Kotlin, no platform dependency. Matches the formula and Earth
+  radius (6,371,009 m) of
   [`com.google.maps.android.SphericalUtil`](https://github.com/googlemaps/android-maps-utils),
   since that's what the KnowYourCity Android app's equivalent calculations
   are built on (`isSameStreet`, way/segment length in
   `BackendCalculationHelper`) — this is a from-scratch reimplementation of
   that formula, not a port of Android-maps-utils' code.
-- **`GeometryEngine`** — an interface for the heavier polygon operations
-  (area, contains, intersects, intersection, difference) the Android app
-  currently gets from the
+- **`GeometryEngine`** — an interface, plus one implementation, for the
+  heavier polygon operations (area, contains, intersects, intersection,
+  difference) the Android app currently gets from the
   [Esri Geometry API](https://github.com/Esri/geometry-api-java)
   (`com.esri.geometry:esri-geometry-api`, public, Apache-2.0). Esri's
   library is JVM-only, so it can't be used from a Kotlin/Wasm browser
-  target — `GeometryEngine` exists so callers can depend on one interface
-  and swap the backend per platform. **Implementations are not part of this
-  repo yet** — see [`AGENTS.md`](AGENTS.md) for the current status.
+  target.
+
+Both are now fully implemented and pure Kotlin (`commonMain`), so — despite
+the original plan calling for a JVM/Esri actual plus a Wasm/Turf.js
+actual — there ends up being no per-platform split at all: one
+implementation, every target.
+
+## `PolyBoolGeometryEngine`
+
+`GeometryEngine`'s only implementation right now. Built on top of a vendored
+copy of [polybool-kotlin](https://github.com/StefanOltmann/polybool-kotlin)
+(MIT, Stefan Oltmann's Kotlin Multiplatform port of
+[polybool-java](https://github.com/Menecats/polybool-java)/
+[polybooljs](https://github.com/velipso/polybooljs), Copyright (c) 2016
+Sean Connelly, 2021 Davide Menegatti, 2025 Stefan Oltmann) — see
+[`AGENTS.md`](AGENTS.md) for exactly what's vendored, why (no working Maven
+Central artifact currently exists for it, despite what its own README
+claims), and how GeoJSON Polygon/MultiPolygon conversion (including holes)
+was ported on top of its public API from `polybooljs`'s own `geojson.js`
+reference implementation, since the Kotlin port doesn't include that part.
+
+**Not numerically identical to Esri's results** — different algorithm.
+Verified so far only against hand-built fixtures (squares, a polygon with a
+hole, a MultiPolygon) in `PolyBoolGeometryEngineTest` — a cross-check
+against real OSM administrative-boundary GeoJSON (comparing to what the
+Android app's Esri-based code produces for the same input) is still
+outstanding before trusting this for real region data.
 
 ## Why not `expect`/`actual`?
 
 `GeometryEngine` is a plain `interface` in `commonMain`, not an
 `expect`/`actual` declaration. There's no single canonical implementation to
-declare `expect` for, and doing so would force every target to ship a
-(possibly stub) `actual` before any real implementation exists. Plain
-per-platform classes implementing the interface compose better here.
+declare `expect` for — plain classes implementing the interface (of which
+there could in principle be more than one) compose better here.
 
 ## Targets
 
@@ -47,13 +70,18 @@ dependencies {
 ```kotlin
 import de.jonaswolf.geometry.GeoMath
 import de.jonaswolf.geometry.GeoPoint
+import de.jonaswolf.geometry.PolyBoolGeometryEngine
 
 val meters = GeoMath.distanceMeters(GeoPoint(52.52, 13.405), GeoPoint(48.1351, 11.582))
-```
 
-`GeometryEngine` can be depended on today for its type, but there is no
-constructible implementation yet — see below.
+val engine = PolyBoolGeometryEngine()
+val area = engine.area(someGeoJsonPolygonString)
+val overlap = engine.intersection(regionAGeoJson, regionBGeoJson)
+```
 
 ## License
 
-Apache-2.0 — see [`LICENSE`](LICENSE).
+Apache-2.0 — see [`LICENSE`](LICENSE). Vendored `polybool-kotlin` code under
+`src/commonMain/kotlin/de/stefan_oltmann/polybool/` keeps its own original
+MIT license and copyright headers — see [`LICENSE-polybool-kotlin.txt`](LICENSE-polybool-kotlin.txt)
+and [`AGENTS.md`](AGENTS.md).

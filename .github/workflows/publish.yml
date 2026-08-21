@@ -1,0 +1,37 @@
+name: Publish
+
+# Publishes to GitHub Packages (Maven) on every version tag, so the library
+# is usable directly without waiting on JitPack's on-demand build. Tag
+# pushes also make the same ref immediately resolvable via JitPack
+# independently of this workflow.
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: ./gradlew jvmTest --console=plain
+
+      - name: Derive version from tag
+        run: echo "LIBRARY_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - run: ./gradlew publish --console=plain
+        env:
+          LIBRARY_VERSION: ${{ env.LIBRARY_VERSION }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
