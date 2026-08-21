@@ -9,7 +9,8 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    // Not FAIL_ON_PROJECT_REPOS: the Kotlin/Wasm plugin registers its own
+    // project-level repository for downloading Node.js, which that mode blocks.
     repositories {
         google()
         mavenCentral()
