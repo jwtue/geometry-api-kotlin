@@ -18,7 +18,16 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # jvmTest runs GeoMathTest and PolyBoolGeometryEngineTest (commonTest) on
-      # the JVM; wasmJs is compile-checked rather than test-run in CI to avoid
-      # depending on a headless-browser setup for coverage jvmTest already provides.
-      - run: ./gradlew jvmTest compileKotlinWasmJs --console=plain
+      # jvmTest/jsNodeTest actually run GeoMathTest + PolyBoolGeometryEngineTest
+      # (commonTest) - both were verified locally to genuinely execute (not just
+      # compile) on jvm/js/mingwX64. jsNodeTest needs no browser, unlike
+      # jsBrowserTest/wasmJs, which stay compile-checked here to avoid a
+      # headless-browser CI dependency. Every other target (native) is
+      # compile-checked only - ubuntu-latest can't execute mingwX64/macOS/iOS
+      # test binaries.
+      - run: >
+          ./gradlew jvmTest jsNodeTest compileKotlinWasmJs compileKotlinJs
+          compileKotlinLinuxX64 compileKotlinLinuxArm64 compileKotlinMingwX64
+          compileKotlinMacosX64 compileKotlinMacosArm64 compileKotlinIosX64
+          compileKotlinIosArm64 compileKotlinIosSimulatorArm64
+          --console=plain

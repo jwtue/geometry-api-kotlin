@@ -29,6 +29,18 @@ kotlin {
     wasmJs {
         browser()
     }
+    js {
+        browser()
+        nodejs()
+    }
+    linuxX64()
+    linuxArm64()
+    mingwX64()
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     sourceSets {
         commonMain.dependencies {

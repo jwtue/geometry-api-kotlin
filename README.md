@@ -52,6 +52,15 @@ there could in principle be more than one) compose better here.
 
 - `jvm`
 - `wasmJs` (browser)
+- `js` (browser + Node.js)
+- `linuxX64`, `linuxArm64`, `mingwX64` (Windows), `macosX64`, `macosArm64`
+- `iosX64`, `iosArm64`, `iosSimulatorArm64`
+
+Everything is pure `commonMain` Kotlin (no platform APIs), so all 12 tests
+(`GeoMathTest` + `PolyBoolGeometryEngineTest`) genuinely run — not just
+compile — on `jvm`, `js` (both browser and Node.js), and `mingwX64`,
+verified locally; the remaining targets are compile-verified only (no host
+available to execute their test binaries in this project's CI).
 
 ## Usage
 

@@ -26,9 +26,18 @@ explicitly instead of guessed at.
   undertaking for something that already exists elsewhere under a
   compatible license).
 - **Language/build:** Kotlin Multiplatform, Gradle Kotlin DSL, version
-  catalog (`gradle/libs.versions.toml`). Targets: `jvm`, `wasmJs` (browser),
-  declared in `build.gradle.kts`. Uses `kotlinx-serialization-json` for
-  GeoJSON parsing.
+  catalog (`gradle/libs.versions.toml`). Targets (`build.gradle.kts`): `jvm`,
+  `wasmJs`, `js` (browser+Node.js), `linuxX64`, `linuxArm64`, `mingwX64`,
+  `macosX64`, `macosArm64`, `iosX64`, `iosArm64`, `iosSimulatorArm64`. Uses
+  `kotlinx-serialization-json` for GeoJSON parsing — resolves and works
+  correctly on every target above, confirmed by actually running all 12
+  `commonTest` tests (not just compiling) on `jvm`, `js` (browser and
+  Node.js), and `mingwX64`; the rest are compile-verified only (no host
+  available locally or in CI to execute their test binaries). `macosX64`
+  triggers a deprecation warning as of Kotlin 2.3.20
+  (`KotlinNativeTargetWithHostTests` / "Target is no longer available",
+  https://kotl.in/native-targets-tiers) — still compiles, worth
+  re-evaluating whether to drop it on a future Kotlin upgrade.
 - **group:artifact:** `de.jonaswolf.geometry:geometry-api-kotlin`
   (`build.gradle.kts`: `group = "de.jonaswolf.geometry"`, `rootProject.name`
   in `settings.gradle.kts` = `"geometry-api-kotlin"`). Single-module repo —
@@ -151,8 +160,8 @@ vs. boundary-straddling square; **area of a polygon with a hole** (outer
 10×10 minus a 2×2 hole = 96 — the test that actually exercises the
 hole-subtraction/nesting-hierarchy logic, not just simple single-ring
 shapes); area of a MultiPolygon (sum of its parts). Combined with
-`GeoMathTest` (3 tests, unchanged), all 12 commonTest tests pass on the JVM
-target; both `jvm` and `wasmJs` compile.
+`GeoMathTest` (3 tests, unchanged), all 12 commonTest tests genuinely pass
+on `jvm`, `js` (browser and Node.js), and `mingwX64`; every target compiles.
 
 **Not yet done**: a cross-check against real OSM administrative-boundary
 GeoJSON, comparing `PolyBoolGeometryEngine`'s output to what an Esri-based
@@ -164,7 +173,7 @@ behavior on real, larger, potentially messier region/street boundary data.
 
 Tagged `v0.1.0`, published to this repo's GitHub Packages Maven registry via
 `.github/workflows/publish.yml` (triggers on `v*` tags); `.github/workflows/ci.yml`
-runs `jvmTest` + a `wasmJs` compile check on every push/PR.
+runs `jvmTest`/`jsNodeTest` plus a compile check for every other target.
 
 ## Open items
 
@@ -175,7 +184,8 @@ runs `jvmTest` + a `wasmJs` compile check on every push/PR.
   but a separate notice — see `LICENSE-polybool-kotlin.txt`). Keep that
   file and the in-file copyright headers intact if this code is copied
   elsewhere.
-- No `iosArm64`/other Kotlin/Native targets yet — only `jvm` and `wasmJs`.
-  Everything here is already pure `commonMain`, so extending to more
-  targets should be low-risk (unlike when `GeometryEngine` was still
-  expected to need a real per-platform GIS engine).
+- `androidTarget()` deliberately not added — the plain `jvm` artifact
+  already works as a normal dependency from Android projects (no
+  Android-specific APIs used anywhere here).
+- `macosX64`'s deprecation warning (see "Project overview") — revisit on a
+  future Kotlin upgrade.
