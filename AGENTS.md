@@ -171,7 +171,11 @@ behavior on real, larger, potentially messier region/street boundary data.
 
 ## Released as
 
-Tagged `v0.1.0`, published to this repo's GitHub Packages Maven registry via
+Tagged `v0.2.0` (the first release, `v0.1.0`, predates the target expansion
+above and only published `jvm`/`wasmJs` — `v0.2.0` is the first release with
+every target's package actually published, confirmed via the publish
+workflow's own logs, not assumed from a green CI badge), published to this
+repo's GitHub Packages Maven registry via
 `.github/workflows/publish.yml` (triggers on `v*` tags); `.github/workflows/ci.yml`
 runs `jvmTest`/`jsNodeTest` plus a compile check for every other target.
 
