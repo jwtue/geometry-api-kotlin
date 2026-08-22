@@ -13,9 +13,7 @@ public data class GeoPoint(val latitude: Double, val longitude: Double)
  * platform-specific GIS engine needed, unlike [GeometryEngine]'s polygon
  * operations. Matches `com.google.maps.android.SphericalUtil`'s formula and
  * Earth radius exactly (6371009 m, its `computeAngleBetween` haversine
- * formula), since that's what the KnowYourCity Android app's equivalent
- * calculations (`isSameStreet`, `Segment.length`/`Polyline.length` in
- * `BackendCalculationHelper`) are built on.
+ * formula) for compatibility with applications already built on that library.
  */
 public object GeoMath {
     private const val EARTH_RADIUS_METERS = 6371009.0

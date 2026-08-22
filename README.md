@@ -1,30 +1,24 @@
 # geometry-api-kotlin
 
-A Kotlin Multiplatform geometry abstraction, built for
-[KnowYourCity](https://github.com/jwtue)'s Android→web (Kotlin
-Multiplatform/Compose Multiplatform) expansion. Two parts, deliberately kept
-separate because they started with very different portability stories:
+A Kotlin Multiplatform geometry library for common GIS-style needs when
+working with OSM/GeoJSON-shaped data. Two parts, deliberately kept separate
+because they started with very different portability stories:
 
 - **`GeoMath`** — great-circle (haversine) point distance and polyline
   length. Pure Kotlin, no platform dependency. Matches the formula and Earth
   radius (6,371,009 m) of
-  [`com.google.maps.android.SphericalUtil`](https://github.com/googlemaps/android-maps-utils),
-  since that's what the KnowYourCity Android app's equivalent calculations
-  are built on (`isSameStreet`, way/segment length in
-  `BackendCalculationHelper`) — this is a from-scratch reimplementation of
-  that formula, not a port of Android-maps-utils' code.
+  [`com.google.maps.android.SphericalUtil`](https://github.com/googlemaps/android-maps-utils)
+  — a from-scratch reimplementation of that formula, not a port of
+  Android-maps-utils' code (which is Android-only and JVM-bound).
 - **`GeometryEngine`** — an interface, plus one implementation, for the
   heavier polygon operations (area, contains, intersects, intersection,
-  difference) the Android app currently gets from the
+  difference) that libraries like the
   [Esri Geometry API](https://github.com/Esri/geometry-api-java)
-  (`com.esri.geometry:esri-geometry-api`, public, Apache-2.0). Esri's
-  library is JVM-only, so it can't be used from a Kotlin/Wasm browser
-  target.
+  (`com.esri.geometry:esri-geometry-api`, public, Apache-2.0) provide on the
+  JVM but that have no equivalent usable from a Kotlin/Wasm browser target.
 
-Both are now fully implemented and pure Kotlin (`commonMain`), so — despite
-the original plan calling for a JVM/Esri actual plus a Wasm/Turf.js
-actual — there ends up being no per-platform split at all: one
-implementation, every target.
+Both are now fully implemented and pure Kotlin (`commonMain`), so there ends
+up being no per-platform split at all: one implementation, every target.
 
 ## `PolyBoolGeometryEngine`
 
@@ -43,9 +37,9 @@ reference implementation, since the Kotlin port doesn't include that part.
 **Not numerically identical to Esri's results** — different algorithm.
 Verified so far only against hand-built fixtures (squares, a polygon with a
 hole, a MultiPolygon) in `PolyBoolGeometryEngineTest` — a cross-check
-against real OSM administrative-boundary GeoJSON (comparing to what the
-Android app's Esri-based code produces for the same input) is still
-outstanding before trusting this for real region data.
+against real OSM administrative-boundary GeoJSON (comparing to what an
+Esri-based implementation produces for the same input) is still outstanding
+before trusting this for real region data.
 
 ## Why not `expect`/`actual`?
 

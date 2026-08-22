@@ -10,22 +10,21 @@ explicitly instead of guessed at.
   helper (`GeoMath`) and a polygon-GIS abstraction (`GeometryEngine`) with
   one implementation (`PolyBoolGeometryEngine`). Both are fully implemented,
   pure Kotlin, no platform-specific code anywhere in the repo.
-- **Why it exists:** built for [KnowYourCity](https://github.com/jwtue)'s
-  Android→web expansion. The Android app's `BackendCalculationHelper`
-  (region/street-building logic) uses the
+- **Why it exists:** GIS toolkits like the
   [Esri Geometry API](https://github.com/Esri/geometry-api-java) (public,
   Apache-2.0, `com.esri.geometry:esri-geometry-api`) for polygon operations
-  and `com.google.maps.android.SphericalUtil` for point/line distance —
-  both JVM-only, unusable from a Kotlin/Wasm browser target. The original
-  plan (see `KnowYourCity2022/WEB_KMP_PLAN.md`) was a JVM/Esri actual plus a
-  Wasm/Turf.js (JS interop) actual; that plan was abandoned in favor of the
-  single pure-Kotlin implementation described below once it turned out one
-  already existed to build on (see "PolyBoolGeometryEngine.kt" below) —
-  full Esri itself was evaluated and rejected as a port target (its
-  boolean-op engine alone depends on a ~2,200-line shared planar-topology
-  helper, `OperatorSimplifyLocalHelper.java`, on top of geometry primitives
-  not counted in that figure — a multi-week undertaking for something that
-  already exists elsewhere under a compatible license).
+  and `com.google.maps.android.SphericalUtil` for point/line distance are
+  JVM-only, unusable from a Kotlin/Wasm browser target (or other non-JVM
+  Kotlin Multiplatform targets). A JVM/Esri actual plus a Wasm/Turf.js (JS
+  interop) actual per-platform split was the original plan; that was
+  abandoned in favor of the single pure-Kotlin implementation described
+  below once it turned out one already existed to build on (see
+  "PolyBoolGeometryEngine.kt" below) — full Esri itself was evaluated and
+  rejected as a port target (its boolean-op engine alone depends on a
+  ~2,200-line shared planar-topology helper, `OperatorSimplifyLocalHelper.java`,
+  on top of geometry primitives not counted in that figure — a multi-week
+  undertaking for something that already exists elsewhere under a
+  compatible license).
 - **Language/build:** Kotlin Multiplatform, Gradle Kotlin DSL, version
   catalog (`gradle/libs.versions.toml`). Targets: `jvm`, `wasmJs` (browser),
   declared in `build.gradle.kts`. Uses `kotlinx-serialization-json` for
@@ -52,8 +51,8 @@ explicitly instead of guessed at.
 ### `src/commonMain/kotlin/de/jonaswolf/geometry/GeometryEngine.kt`
 
 `interface GeometryEngine` with five methods, all operating on raw GeoJSON
-text in/out (not a shared geometry value type — GeoJSON is already the
-interchange format the Android app's `GeoJson.kt` uses throughout):
+text in/out (not a shared geometry value type — GeoJSON is already a
+natural interchange format for this kind of data):
 
 - `fun area(geoJson: String): Double`
 - `fun contains(outer: String, inner: String): Boolean`
@@ -61,10 +60,10 @@ interchange format the Android app's `GeoJson.kt` uses throughout):
 - `fun intersection(a: String, b: String): String`
 - `fun difference(a: String, b: String): String`
 
-This set matches exactly what `BackendCalculationHelper` in the Android app
-calls Esri for today (`assignStreetsToRegions`, `getFittingChildRegions`,
-`calculateRegionStreetRatios`, `GeoJson.calculateInverse`) — nothing broader
-or more speculative.
+This is a deliberately narrow set — the common operations an
+administrative-region/street-boundary processing pipeline needs (area
+comparisons, containment/intersection tests, boolean set operations) —
+rather than a broad general-purpose GIS API surface.
 
 ### `src/commonMain/kotlin/de/stefan_oltmann/polybool/**` — vendored, not our code
 
@@ -156,17 +155,16 @@ shapes); area of a MultiPolygon (sum of its parts). Combined with
 target; both `jvm` and `wasmJs` compile.
 
 **Not yet done**: a cross-check against real OSM administrative-boundary
-GeoJSON, comparing `PolyBoolGeometryEngine`'s output to what the Android
-app's Esri-based `BackendCalculationHelper` produces for the same input —
-the hand-built fixtures above validate the *logic* (holes, MultiPolygons,
-basic set operations) but not behavior on real, larger, potentially
-messier region/street boundary data.
+GeoJSON, comparing `PolyBoolGeometryEngine`'s output to what an Esri-based
+implementation produces for the same input — the hand-built fixtures above
+validate the *logic* (holes, MultiPolygons, basic set operations) but not
+behavior on real, larger, potentially messier region/street boundary data.
 
-## Used by
+## Released as
 
-- Consumed as a composite build (`includeBuild`) from
-  `KnowYourCity2022-multi/:shared` during local development (see that
-  repo's `settings.gradle.kts`).
+Tagged `v0.1.0`, published to this repo's GitHub Packages Maven registry via
+`.github/workflows/publish.yml` (triggers on `v*` tags); `.github/workflows/ci.yml`
+runs `jvmTest` + a `wasmJs` compile check on every push/PR.
 
 ## Open items
 
